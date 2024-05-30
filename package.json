@@ -1,5 +1,5 @@
 {
-  "name": "n8n-nodes-data-validation",
+  "name": "@flagbit/n8n-nodes-data-validation",
   "version": "1.0.1",
   "description": "",
   "keywords": [
@@ -42,13 +42,18 @@
     "prepare": "husky install",
     "pre-merge-commit": "npm install && npm run integrity-check"
   },
-  "author": "Bartolomeu Rodrigues",
+  "author": {
+    "name": "Flagbit GmbH",
+    "email": "info@flagbit.de",
+    "url": "http://flagbit.de"
+  },
   "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "ajv": "^8.11.0"
+    "ajv": "^8.11.0",
+    "ajv-errors": "^3.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
@@ -108,10 +113,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Bartmr/n8n-nodes-data-validation.git"
+    "url": "https://github.com/flagbit/n8n-nodes-data-validation.git"
   },
   "bugs": {
-    "url": "https://github.com/Bartmr/n8n-nodes-data-validation/issues"
+    "url": "https://github.com/flagbit/n8n-nodes-data-validation/issues"
   },
-  "homepage": "https://github.com/Bartmr/n8n-nodes-data-validation"
+  "homepage": "https://github.com/flagbit/n8n-nodes-data-validation"
 }

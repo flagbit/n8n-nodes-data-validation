@@ -1,22 +1,24 @@
 import { IExecuteFunctions } from "n8n-core";
 import {
+  IBinaryKeyData,
+  IDataObject,
   INodeExecutionData,
   INodeType,
   INodeTypeDescription,
-  NodeApiError,
   NodeOperationError,
 } from "n8n-workflow";
 import Ajv, { Schema } from "ajv";
+import addErrors from "ajv-errors";
 
 export class DataValidation implements INodeType {
   description: INodeTypeDescription = {
-    displayName: "Data Validation",
+    displayName: "Flagbit Data Validation",
     name: "dataValidation",
     group: ["transform"],
     version: 1,
     description: "Validate input data before continuing the workflow",
     defaults: {
-      name: "Data Validation",
+      name: "Flagbit Data Validation",
       color: "#000000",
     },
     inputs: ["main"],
@@ -52,6 +54,7 @@ export class DataValidation implements INodeType {
 
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
+    let item: INodeExecutionData;
     const returnData: INodeExecutionData[] = [];
 
     const jsonSchemaString = this.getNodeParameter("jsonSchema", 0);
@@ -68,7 +71,8 @@ export class DataValidation implements INodeType {
       throw new NodeOperationError(this.getNode(), "Invalid JSON Schema");
     }
 
-    const ajv = new Ajv();
+    const ajv = new Ajv({ allErrors: true });
+    addErrors(ajv);
     let validate: ReturnType<typeof ajv["compile"]>;
 
     try {
@@ -79,32 +83,34 @@ export class DataValidation implements INodeType {
 
     for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const item = items[itemIndex]!;
+      item = items[itemIndex]!;
 
-      const json = item["json"];
+      let newItemJson: IDataObject = {};
+      const newItemBinary: IBinaryKeyData = {};
 
-      const valid = validate(json);
-
-      if (!valid) {
-        throw new NodeApiError(
-          this.getNode(),
-          {
-            errors: JSON.stringify(validate.errors, undefined, 4),
-          },
-          {
-            itemIndex,
-            message: "Invalid data",
-            description: JSON.stringify(validate.errors, undefined, 4),
-            httpCode: "400",
-          }
-        );
+      if (item.binary !== undefined) {
+        Object.assign(newItemBinary, item.binary);
       }
 
+      newItemJson = Object.assign({}, item.json);
+
+      const valid = validate(item["json"]);
+
+      if (!valid) {
+        if (validate.errors) {
+          const errors = validate.errors.map((error) => ({
+            message: error.message || "",
+            schemaPath: error.schemaPath,
+            params: error.params,
+          }));
+
+          newItemJson["errors"] = errors;
+        }
+      }
       returnData.push({
-        json,
-        pairedItem: {
-          item: itemIndex,
-        },
+        json: newItemJson,
+        binary:
+          Object.keys(newItemBinary).length === 0 ? undefined : newItemBinary,
       });
     }
 
